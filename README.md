@@ -1,2 +1,2 @@
 # yotamanager
-yota manager
+yota manager!
