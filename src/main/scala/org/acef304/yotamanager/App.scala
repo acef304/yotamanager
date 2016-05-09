@@ -41,7 +41,6 @@ object Manager extends App {
         Await.result(Datastore.create(), 2 second)
         while (true) {
           YotaStatus.refresh()
-          //println(YotaStatus.sessionInfo)
           YotaStatus.sessionInfo map Datastore.updateSession
           Thread.sleep(500)
         }
