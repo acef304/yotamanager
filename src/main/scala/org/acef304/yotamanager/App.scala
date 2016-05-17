@@ -1,12 +1,13 @@
 package org.acef304.yotamanager
 
 import java.sql.Timestamp
+
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.Await
 
 object Props {
   def yota_source = scala.io.Source.fromURL("http://10.0.0.1/status")
-  //def yota_source = scala.io.Source.fromFile("./status")
 }
 
 object Manager extends App {
@@ -53,6 +54,40 @@ object Manager extends App {
 
     }
   })
+}
+
+object NetworkStatus {
+  case class NetworkStat(time: Long, tx_bytes: Long, tx_packets: Long, rx_bytes: Long, rx_packets: Long)
+
+  def getNetworkInfo() = {
+    val tx_bytes = scala.io.Source.fromFile("/sys/class/net/eth1/statistics/tx_bytes").getLines().mkString("").toLong
+    val tx_packets = scala.io.Source.fromFile("/sys/class/net/eth1/statistics/tx_packets").getLines().mkString("").toLong
+    val rx_bytes = scala.io.Source.fromFile("/sys/class/net/eth1/statistics/rx_bytes").getLines().mkString("").toLong
+    val rx_packets = scala.io.Source.fromFile("/sys/class/net/eth1/statistics/rx_packets").getLines().mkString("").toLong
+    NetworkStat(System.currentTimeMillis(), tx_bytes, tx_packets, rx_bytes, rx_packets)
+  }
+
+  val stats = ArrayBuffer.empty[NetworkStat]
+
+  lazy val daemon = new Thread(new Runnable {
+    def internalRun: Unit = {
+      try{
+        while (true) {
+          stats += getNetworkInfo()
+          Thread.sleep(10)
+        }
+      }
+      catch {
+        case ex: Exception =>
+          ex.printStackTrace()
+          internalRun
+      }
+    }
+
+    def run() = internalRun
+  })
+
+
 }
 
 object YotaStatus {
