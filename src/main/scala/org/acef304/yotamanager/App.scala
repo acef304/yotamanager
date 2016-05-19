@@ -57,7 +57,22 @@ object Manager extends App {
 }
 
 object NetworkStatus {
+
+
   case class NetworkStat(time: Long, tx_bytes: Long, tx_packets: Long, rx_bytes: Long, rx_packets: Long)
+
+  trait Summarizable[T] {
+    def summarize(source: scala.collection.Seq[T]): T
+  }
+  object NetworkStatSummarize extends Summarizable[NetworkStat] {
+    def summarize(source: Seq[NetworkStat]) = NetworkStat(
+      source.map(_.time).max,
+      source.map(_.tx_bytes).max,
+      source.map(_.tx_packets).max,
+      source.map(_.rx_bytes).max,
+      source.map(_.rx_packets).max
+    )
+  }
 
   def getNetworkInfo() = {
     val tx_bytes = scala.io.Source.fromFile("/sys/class/net/eth1/statistics/tx_bytes").getLines().mkString("").toLong
@@ -67,7 +82,23 @@ object NetworkStatus {
     NetworkStat(System.currentTimeMillis(), tx_bytes, tx_packets, rx_bytes, rx_packets)
   }
 
-  val stats = ArrayBuffer.empty[NetworkStat]
+  val stats = new CircularBuffer[NetworkStat](5000)
+
+  class LapsedStats[T, S: Summarizable[T]](propotions: Seq[Int], summary: S){
+    val maxLevel = propotions.length
+    val statBuffers = Vector.fill(maxLevel)(new CircularBuffer[T](1000))
+    val counters = ArrayBuffer.fill(maxLevel)(0)
+
+    private def storeStat(elem: T, level: Int) = {
+      if (level < maxLevel) {
+        statBuffers(level) += elem
+        counters(level) = counters(level) % propotions(level)
+        if (counters(level) == 0) summary.summarize(statBuffers(level))
+      }
+    }
+
+    def storeStat(elem: T) = storeStat(elem, 0)
+  }
 
   lazy val daemon = new Thread(new Runnable {
     def internalRun: Unit = {
