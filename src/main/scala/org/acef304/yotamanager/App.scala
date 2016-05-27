@@ -84,12 +84,12 @@ object NetworkStatus {
 
   val stats = new CircularBuffer[NetworkStat](5000)
 
-  class LapsedStats[T, S: Summarizable[T]](propotions: Seq[Int], summary: S){
+  class LapsedStats[T](propotions: Seq[Int], summary: Summarizable[T]){
     val maxLevel = propotions.length
     val statBuffers = Vector.fill(maxLevel)(new CircularBuffer[T](1000))
     val counters = ArrayBuffer.fill(maxLevel)(0)
 
-    private def storeStat(elem: T, level: Int) = {
+    private def storeStat(elem: T, level: Int): Unit = {
       if (level < maxLevel) {
         statBuffers(level) += elem
         counters(level) = counters(level) % propotions(level)
@@ -97,7 +97,7 @@ object NetworkStatus {
       }
     }
 
-    def storeStat(elem: T) = storeStat(elem, 0)
+    def storeStat(elem: T): Unit = storeStat(elem, 0)
   }
 
   lazy val daemon = new Thread(new Runnable {
