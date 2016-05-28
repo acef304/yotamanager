@@ -12,9 +12,7 @@ object ObservableTest {
   var subs: Subscription = null
   val o = Observable.interval(10000 millis) map ((_, System.currentTimeMillis()))
 
-  def start(param: String) = {
-    subs = o.subscribe( n => println(s"$param - $n"))
-  }
+  def start(param: String) = subs = o.subscribe( n => println(s"$param - $n")) 
 
   def stop = subs.unsubscribe()
 }
