@@ -75,10 +75,11 @@ object NetworkStatus {
   }
 
   def getNetworkInfo() = {
-    val tx_bytes = scala.io.Source.fromFile("/sys/class/net/eth1/statistics/tx_bytes").getLines().mkString("").toLong
-    val tx_packets = scala.io.Source.fromFile("/sys/class/net/eth1/statistics/tx_packets").getLines().mkString("").toLong
-    val rx_bytes = scala.io.Source.fromFile("/sys/class/net/eth1/statistics/rx_bytes").getLines().mkString("").toLong
-    val rx_packets = scala.io.Source.fromFile("/sys/class/net/eth1/statistics/rx_packets").getLines().mkString("").toLong
+    val interface = "wlp1s0"
+    val tx_bytes = scala.io.Source.fromFile(s"/sys/class/net/$interface/statistics/tx_bytes").getLines().mkString("").toLong
+    val tx_packets = scala.io.Source.fromFile(s"/sys/class/net/$interface/statistics/tx_packets").getLines().mkString("").toLong
+    val rx_bytes = scala.io.Source.fromFile(s"/sys/class/net/$interface/statistics/rx_bytes").getLines().mkString("").toLong
+    val rx_packets = scala.io.Source.fromFile(s"/sys/class/net/$interface/statistics/rx_packets").getLines().mkString("").toLong
     NetworkStat(System.currentTimeMillis(), tx_bytes, tx_packets, rx_bytes, rx_packets)
   }
 
@@ -95,7 +96,7 @@ object NetworkStatus {
         counters(level) = counters(level) % propotions(level)
         if (counters(level) == 0) summary.summarize(statBuffers(level))
       }
-    }
+}
 
     def storeStat(elem: T): Unit = storeStat(elem, 0)
   }
@@ -117,8 +118,6 @@ object NetworkStatus {
 
     def run() = internalRun
   })
-
-
 }
 
 object YotaStatus {
