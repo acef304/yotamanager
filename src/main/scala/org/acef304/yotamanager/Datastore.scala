@@ -45,7 +45,21 @@ object Datastore {
   }
   val sessions = TableQuery[Sessions]
 
-  val schema = statistics.schema ++ sessions.schema
+  class InterfaceStats(tag: Tag) extends Table[NetworkStatus.NetworkStat](tag, "INTERFACES") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def time = column[Long]("time")
+    def tx_bytes = column[Long]("tx_bytes")
+    def tx_packets = column[Long]("tx_packets")
+    def rx_bytes = column[Long]("rx_bytes")
+    def rx_packets = column[Long]("rx_packets")
+
+    def * = (
+      id.?, time, tx_bytes, tx_packets, rx_bytes, rx_packets
+      ) <> (NetworkStatus.NetworkStat.tupled, NetworkStatus.NetworkStat.unapply)
+  }
+  val interfaceStats = TableQuery[InterfaceStats]
+
+  val schema = statistics.schema ++ sessions.schema ++ interfaceStats.schema
 
   def create() = {
     db.run(MTable.getTables("STAT").map{

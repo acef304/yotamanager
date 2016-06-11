@@ -14,15 +14,17 @@ object ObservableTest {
 
   var secondSpeed = 0L
   var minuteSpeed = 0L
+  var latestInfo = NetworkStatus.getNetworkInfo()
 
-  seconds.slidingBuffer(2, 1).subscribe{ t => secondSpeed = t.last.rx_bytes - t.head.rx_bytes}
+  seconds.slidingBuffer(2, 1).subscribe{ t => secondSpeed = t.last.rx_bytes - t.head.rx_bytes; latestInfo = t.last}
   seconds.slidingBuffer(61, 1).subscribe{ t => minuteSpeed = (t.last.rx_bytes - t.head.rx_bytes) / 60}
 
   val daemon = new Thread(new Runnable {
     def run = {
       while (true) {
         println(s"tick speed: $secondSpeed \t\tsecond speed: $minuteSpeed")
-        Thread.sleep(200)
+        println(latestInfo)
+        //Thread.sleep(200)
       }
     }
   })

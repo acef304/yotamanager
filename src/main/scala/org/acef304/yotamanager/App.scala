@@ -59,13 +59,14 @@ object Manager extends App {
 object NetworkStatus {
 
 
-  case class NetworkStat(time: Long, tx_bytes: Long, tx_packets: Long, rx_bytes: Long, rx_packets: Long)
+  case class NetworkStat(id: Option[Long] = None, time: Long, tx_bytes: Long, tx_packets: Long, rx_bytes: Long, rx_packets: Long)
 
   trait Summarizable[T] {
     def summarize(source: scala.collection.Seq[T]): T
   }
   object NetworkStatSummarize extends Summarizable[NetworkStat] {
     def summarize(source: Seq[NetworkStat]) = NetworkStat(
+      source.map(_.id).max,
       source.map(_.time).max,
       source.map(_.tx_bytes).max,
       source.map(_.tx_packets).max,
@@ -80,7 +81,7 @@ object NetworkStatus {
     val tx_packets = scala.io.Source.fromFile(s"/sys/class/net/$interface/statistics/tx_packets").getLines().mkString("").toLong
     val rx_bytes = scala.io.Source.fromFile(s"/sys/class/net/$interface/statistics/rx_bytes").getLines().mkString("").toLong
     val rx_packets = scala.io.Source.fromFile(s"/sys/class/net/$interface/statistics/rx_packets").getLines().mkString("").toLong
-    NetworkStat(System.currentTimeMillis(), tx_bytes, tx_packets, rx_bytes, rx_packets)
+    NetworkStat(None, System.currentTimeMillis(), tx_bytes, tx_packets, rx_bytes, rx_packets)
   }
 
   val stats = new CircularBuffer[NetworkStat](5000)
